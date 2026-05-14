@@ -1,6 +1,5 @@
 package cn.pzhdv.skyrocadminapi.service.impl;
 
-import cn.pzhdv.skyrocadminapi.constant.MenuConstants;
 import cn.pzhdv.skyrocadminapi.entity.SysMenu;
 import cn.pzhdv.skyrocadminapi.entity.SysButton;
 import cn.pzhdv.skyrocadminapi.mapper.SysButtonMapper;
@@ -103,7 +102,6 @@ public class SysButtonServiceImpl extends ServiceImpl<SysButtonMapper, SysButton
 
         LambdaQueryWrapper<SysMenu> menuWrapper = new LambdaQueryWrapper<>();
         menuWrapper.in(SysMenu::getMenuId, menuIds);
-        menuWrapper.eq(SysMenu::getDeleted, MenuConstants.NOT_DELETED);
         Map<Long, SysMenu> menuMap = sysMenuService.list(menuWrapper).stream()
                 .collect(Collectors.toMap(SysMenu::getMenuId, m -> m, (k1, k2) -> k1));
 

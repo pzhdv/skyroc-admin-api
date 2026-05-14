@@ -78,15 +78,15 @@ public class SysMenu implements Serializable {
     @ApiModelProperty("菜单名称（如：系统管理,用户管理）")
     private String menuName;
     /**
-     * 路由名称(如：manage,manage_user)
+     * 路由名称(如：manage,manage_user,manage_user_[id])
      */
     @NotBlank(message = "路由名称不能为空")
     @Pattern(
-            regexp = "^[a-zA-Z][a-zA-Z0-9_-]*$",
-            message = "路由名称只能包含字母、数字、下划线和连字符，且必须以字母开头"
+            regexp = "^[a-zA-Z][a-zA-Z0-9_\\-\\[\\]]*$",
+            message = "路由名称只能包含字母、数字、下划线、连字符、中括号，且必须以字母开头"
     )
     @TableField("route_name")
-    @ApiModelProperty("路由名称(如：manage,manage_user)")
+    @ApiModelProperty("路由名称(如：manage,manage_user,manage_user_[id])")
     private String routeName;
     /**
      * 路由路径（如：/manage,/manage/user）
@@ -176,14 +176,6 @@ public class SysMenu implements Serializable {
     @TableField("active_menu")
     @ApiModelProperty("高亮的菜单（指定menu_id，用于非菜单页高亮）")
     private String activeMenu;
-    /**
-     * 删除状态：0=未删,1=已删（枚举值不可修改）
-     */
-    @TableLogic
-    @JsonIgnore
-    @ApiModelProperty("删除状态：0=未删,1=已删（枚举值不可修改）")
-    @TableField(value = "deleted", fill = FieldFill.INSERT)
-    private Byte deleted;
 
     /**
      * 创建时间

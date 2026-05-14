@@ -24,6 +24,9 @@
 
 ## 📸 项目功能部分截图
 
+### API接口文档
+![API接口文档](./docs/images/0-api.png)
+
 ### 1. 登录页面
 ![登录页面](./docs/images/01-login.png)
 
@@ -207,7 +210,7 @@ java -jar target/skyroc-admin-api-0.0.1-SNAPSHOT.jar --spring.profiles.active=de
 ### 访问接口文档
 
 ```
-http://localhost:8080/doc.html
+http://localhost:8080/skyrocApi/doc.html
 ```
 
 ---
@@ -344,10 +347,10 @@ java -jar app.jar --spring.profiles.active=prod  # 生产
 
 ## 👨‍💻 作者信息
 
-🧩 姓名：潘宗晖（PanZonghui）
-🌐 博客: https://pzhdv.cn
-📧 邮箱: 1939673715@qq.com
-🐙 GitHub: https://github.com/pzhdv
+🧩 姓名：潘宗晖（PanZonghui）  
+🌐 博客: https://pzhdv.cn  
+📧 邮箱: 1939673715@qq.com  
+🐙 GitHub: https://github.com/pzhdv  
 
 ---
 

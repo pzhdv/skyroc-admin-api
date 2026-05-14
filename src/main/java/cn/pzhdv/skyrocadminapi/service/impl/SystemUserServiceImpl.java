@@ -21,9 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.Serializable;
 import java.math.BigInteger;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -217,7 +215,7 @@ public class SystemUserServiceImpl extends ServiceImpl<SystemUserMapper, SystemU
 
         // 2. 处理角色绑定
         List<Long> roleIds = systemUser.getRoleIds();
-        
+
         // 2.1 删除用户原有的角色关联
         deleteUserRoles(userId);
         log.debug("【更新用户】删除原有角色关联 | 用户ID: {}", userId);
@@ -257,9 +255,9 @@ public class SystemUserServiceImpl extends ServiceImpl<SystemUserMapper, SystemU
      */
     private List<Long> validateRoleIds(List<Long> roleIds) {
         return roleMapper.selectObjs(
-                new LambdaQueryWrapper<SysRole>()
-                        .in(SysRole::getRoleId, roleIds)
-                        .select(SysRole::getRoleId))
+                        new LambdaQueryWrapper<SysRole>()
+                                .in(SysRole::getRoleId, roleIds)
+                                .select(SysRole::getRoleId))
                 .stream()
                 .map(obj -> {
                     // 处理 MyBatis-Plus selectObjs 可能返回 BigInteger 的情况（BIGINT 字段）

@@ -1,13 +1,14 @@
 package cn.pzhdv.skyrocadminapi.interceptor;
 
-
+import cn.pzhdv.skyrocadminapi.context.UserContext;
+import cn.pzhdv.skyrocadminapi.entity.SystemUser;
 import cn.pzhdv.skyrocadminapi.result.ResultCode;
 import cn.pzhdv.skyrocadminapi.result.ResultUtil;
 import cn.pzhdv.skyrocadminapi.utils.IpUtils;
 import cn.pzhdv.skyrocadminapi.utils.JwtTokenUtil;
 import cn.pzhdv.skyrocadminapi.utils.ResponseUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -17,55 +18,92 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * JWT令牌认证拦截器
- * <p>
- * 核心作用：拦截所有需要认证的接口请求，校验请求头中的JWT令牌有效性，
- * 确保只有携带有效令牌的请求才能访问受保护的接口，未通过校验则直接返回认证失败结果。
- * <p>
- * 拦截流程：
- * 1. 记录请求基础信息（路径、客户端IP）；
- * 2. 提取请求头中的JWT令牌；
- * 3. 校验令牌是否存在、是否有效（未过期、签名合法）；
- * 4. 校验通过则放行请求，失败则返回对应错误码并终止请求。
+ * 拦截需要登录的接口，校验Token有效性，解析用户信息存入上下文
  *
  * @author PanZonghui
- * @version 1.0
  * @since 2025-12-31
  */
 @Slf4j
 @Component
 public class JwtInterceptor implements HandlerInterceptor {
 
-  @Autowired private JwtTokenUtil jwtTokenUtil;
+    private final JwtTokenUtil jwtTokenUtil;
 
-  @Override
-  public boolean preHandle(
-      HttpServletRequest request, HttpServletResponse response, Object handler) {
-    // 用户访问请求记录
-    String requestUri = request.getRequestURI();
-    String clientIp = IpUtils.getClientIpForLog(request);
-    log.info("拦截请求 - 路径：{}，客户端IP：{}", requestUri, clientIp);
-
-    // 1. 提取请求头中的Token
-    String token = jwtTokenUtil.extractTokenFromRequest(request);
-
-    // 2. Token不存在校验
-    if (!StringUtils.hasText(token)) {
-      log.warn("Token验证失败 - 未携带令牌，路径：{}，IP：{}", requestUri, clientIp);
-      ResponseUtil.out(response, ResultUtil.error(ResultCode.NOT_LOGIN));
-      return false;
+    public JwtInterceptor(JwtTokenUtil jwtTokenUtil) {
+        this.jwtTokenUtil = jwtTokenUtil;
     }
 
-    // 3. Token有效性校验
-    boolean validateAccessToken = jwtTokenUtil.validateAccessToken(token);
-    log.debug("validateAccessToken:{}", validateAccessToken);
-    if (!validateAccessToken) {
-      log.warn("Token验证失败 - 令牌无效或已过期，路径：{}，IP：{}", requestUri, clientIp);
-      ResponseUtil.out(response, ResultUtil.error(ResultCode.TOKEN_EXPIRED));
-      return false;
+    @Override
+    public boolean preHandle(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull Object handler) {
+
+        String requestUri = request.getRequestURI();
+        String clientIp = IpUtils.getClientIpForLog(request);
+        log.debug("拦截请求 - 路径：{}，客户端IP：{}", requestUri, clientIp);
+
+        // ====================== 放行跨域预检请求 ======================
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
+
+        // 1. 提取Token
+        String token = jwtTokenUtil.extractTokenFromRequest(request);
+
+        // 2. Token为空
+        if (!StringUtils.hasText(token)) {
+            log.warn("Token验证失败 - 未携带令牌，路径：{}，IP：{}", requestUri, clientIp);
+            ResponseUtil.out(response, ResultUtil.error(ResultCode.NOT_LOGIN));
+            return false;
+        }
+
+        // 3. Token无效/过期
+        boolean valid = jwtTokenUtil.validateAccessToken(token);
+        if (!valid) {
+            log.warn("Token验证失败 - 令牌无效或已过期，路径：{}，IP：{}", requestUri, clientIp);
+            ResponseUtil.out(response, ResultUtil.error(ResultCode.TOKEN_EXPIRED));
+            return false;
+        }
+
+        // 4. 解析用户信息（增加异常处理）
+        try {
+            String userId = jwtTokenUtil.getUserIdFromAccessToken(token);
+            String username = jwtTokenUtil.getUsernameFromAccessToken(token);
+
+            // 用户信息判空
+            if (!StringUtils.hasText(userId) || !StringUtils.hasText(username)) {
+                log.warn("Token验证失败 - 用户信息为空，路径：{}，IP：{}", requestUri, clientIp);
+                ResponseUtil.out(response, ResultUtil.error(ResultCode.TOKEN_INVALID));
+                return false;
+            }
+
+            // 存入上下文
+            SystemUser user = new SystemUser();
+            user.setUserId(Long.parseLong(userId));
+            user.setUserName(username);
+            UserContext.setUser(user);
+
+            log.info("Token验证成功 - 路径：{}，IP：{}，用户：{}", requestUri, clientIp, username);
+            return true;
+
+        } catch (NumberFormatException e) {
+            log.error("Token解析失败 - 用户ID格式错误，路径：{}，IP：{}", requestUri, clientIp, e);
+            ResponseUtil.out(response, ResultUtil.error(ResultCode.TOKEN_INVALID));
+            return false;
+        }
     }
 
-    // 4. 验证通过
-    log.info("Token验证成功 - 路径：{}，IP：{}", requestUri, clientIp);
-    return true;
-  }
+    /**
+     * 请求完成后清理ThreadLocal，防止用户串线
+     */
+    @Override
+    public void afterCompletion(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull Object handler,
+            Exception ex) {
+        UserContext.clear();
+        log.debug("ThreadLocal用户信息已清理，请求路径：{}", request.getRequestURI());
+    }
 }

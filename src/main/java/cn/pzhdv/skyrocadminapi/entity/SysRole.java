@@ -4,9 +4,7 @@ import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
@@ -93,12 +91,4 @@ public class SysRole implements Serializable {
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
 
-    /**
-     * 逻辑删除：0-未删除 1-已删除
-     */
-    @JsonIgnore
-    @TableLogic
-    @ApiModelProperty("逻辑删除：0-未删除 1-已删除")
-    @TableField(value = "deleted", fill = FieldFill.INSERT)
-    private Byte deleted;
 }

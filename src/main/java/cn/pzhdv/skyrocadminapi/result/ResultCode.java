@@ -1,5 +1,7 @@
 package cn.pzhdv.skyrocadminapi.result;
 
+import lombok.Getter;
+
 /**
  * 接口响应状态码枚举类
  * <p>
@@ -22,6 +24,7 @@ package cn.pzhdv.skyrocadminapi.result;
  * @version 1.0
  * @since 2025-12-31
  */
+@Getter
 public enum ResultCode {
     // ========================= 基础成功状态 =========================
     /** 通用成功状态码 - 所有接口处理成功的默认返回码 */
@@ -49,8 +52,8 @@ public enum ResultCode {
     LOGIN_FAILED(401002, "用户名或密码错误"),
     /** 令牌过期 - AccessToken失效，需刷新或重新登录 */
     TOKEN_EXPIRED(401003, "登录凭证已过期"),
-    /** 令牌无效 - 令牌格式错误/签名验证失败/篡改 */
-    INVALID_TOKEN(401004, "无效的身份令牌"),
+    /** 令牌无效 - 令牌格式错误/签名验证失败/篡改/解析异常 */
+    TOKEN_INVALID(401004, "无效的身份令牌"),
     /** 刷新令牌过期 - RefreshToken失效，需重新登录 */
     REFRESH_TOKEN_EXPIRED(401005, "登录超时，请重新登录"),
     /** 账号锁定 - 因多次错误操作导致账号临时锁定 */
@@ -160,9 +163,17 @@ public enum ResultCode {
     /** 上传文件为空 - 用户未选择任何文件提交上传请求 */
     FILE_NULL_ERROR(422201, "上传失败，请选择至少一个文件");
 
-    /** 状态码（主码+子码，如401001） */
+    /** 状态码（主码+子码，如401001）
+     * -- GETTER --
+     *  获取状态码
+     *
+     */
     private final int code;
-    /** 错误提示信息（支持【{}】占位符） */
+    /** 错误提示信息（支持【{}】占位符）
+     * -- GETTER --
+     *  获取原始错误信息（含占位符）
+     *
+     */
     private final String message;
 
     /**
@@ -173,22 +184,6 @@ public enum ResultCode {
     ResultCode(int code, String message) {
         this.code = code;
         this.message = message;
-    }
-
-    /**
-     * 获取原始错误信息（含占位符）
-     * @return 未填充占位符的原始提示信息
-     */
-    public String getMessage() {
-        return message;
-    }
-
-    /**
-     * 获取状态码
-     * @return 完整状态码（主码+子码）
-     */
-    public int getCode() {
-        return code;
     }
 
     /**
@@ -209,7 +204,7 @@ public enum ResultCode {
         String filledMsg = this.message;
         // 循环替换所有占位符（支持多个占位符场景）
         for (Object param : params) {
-            filledMsg = filledMsg.replaceFirst("\\{\\}", String.valueOf(param));
+            filledMsg = filledMsg.replaceFirst("\\{}", String.valueOf(param));
         }
         return filledMsg;
     }

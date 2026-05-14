@@ -85,7 +85,7 @@ public class MPCodeGenerator {
     /**
      * 要生成的表名，空数组 {} 表示生成所有表
      */
-    private static final String[] TABLE_NAMES = {"sys_role_menu"};
+    private static final String[] TABLE_NAMES = {"sys_operation_log"};
 
     /**
      * 是否覆盖已存在的文件（true: 覆盖, false: 跳过）

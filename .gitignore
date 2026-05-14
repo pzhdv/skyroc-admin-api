@@ -34,6 +34,5 @@ build/
 .vscode/
 
 # 真实环境配置文件（不提交）
-src/main/resources/application-dev-example.yml
 application-prod.yml
-application-test.yml
+application-dev.yml

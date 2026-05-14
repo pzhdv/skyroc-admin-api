@@ -73,6 +73,7 @@ public class SysRoleButtonServiceImpl extends ServiceImpl<SysRoleButtonMapper, S
      * {@inheritDoc}
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean deleteByRoleId(Long roleId) {
         LambdaQueryWrapper<SysRoleButton> deleteWrapper = new LambdaQueryWrapper<>();
         deleteWrapper.eq(SysRoleButton::getRoleId, roleId);
@@ -83,6 +84,7 @@ public class SysRoleButtonServiceImpl extends ServiceImpl<SysRoleButtonMapper, S
      * {@inheritDoc}
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean deleteByRoleIds(List<Long> roleIds) {
         if (CollectionUtils.isEmpty(roleIds)) {
             return true;
@@ -97,6 +99,27 @@ public class SysRoleButtonServiceImpl extends ServiceImpl<SysRoleButtonMapper, S
         }
         // 有记录则执行删除
         return this.remove(deleteWrapper);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<Long> getButtonIdsByRoleIds(List<Long> roleIds) {
+        if (CollectionUtils.isEmpty(roleIds)) {
+            return Collections.emptyList();
+        }
+        LambdaQueryWrapper<SysRoleButton> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(SysRoleButton::getRoleId, roleIds);
+        List<SysRoleButton> roleButtons = this.list(queryWrapper);
+
+        if (CollectionUtils.isEmpty(roleButtons)) {
+            return Collections.emptyList();
+        }
+
+        return roleButtons.stream()
+                .map(SysRoleButton::getButtonId)
+                .collect(Collectors.toList());
     }
 
 }

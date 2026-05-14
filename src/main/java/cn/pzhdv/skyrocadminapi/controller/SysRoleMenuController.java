@@ -1,5 +1,6 @@
 package cn.pzhdv.skyrocadminapi.controller;
 
+import cn.pzhdv.skyrocadminapi.annotation.ApiLog;
 import cn.pzhdv.skyrocadminapi.entity.SysRole;
 import cn.pzhdv.skyrocadminapi.result.Result;
 import cn.pzhdv.skyrocadminapi.result.ResultCode;
@@ -39,6 +40,7 @@ public class SysRoleMenuController {
     /**
      * 根据角色ID获取菜单列表及首页菜单ID
      */
+    @ApiLog("根据角色ID获取菜单权限列表")
     @ApiOperation(
             value = "根据角色ID获取菜单列表及首页菜单ID",
             notes = "根据角色ID从角色菜单中间表查询出角色拥有的菜单ID列表，同时返回首页菜单ID。",
@@ -82,6 +84,7 @@ public class SysRoleMenuController {
     /**
      * 更新角色菜单权限
      */
+    @ApiLog("更新角色菜单权限")
     @ApiOperation(
             value = "更新角色菜单权限",
             notes = "更新角色的菜单权限和默认首页ID。先删除该角色的所有旧菜单关联，再批量插入新的菜单关联，同时更新角色的默认首页ID。",

@@ -6,6 +6,7 @@ import cn.pzhdv.skyrocadminapi.service.SysUserRoleService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.util.List;
@@ -37,6 +38,7 @@ public class SysUserRoleServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
      * </p>
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean deleteByUserId(Long userId) {
         // 空值校验：用户ID为空时直接返回成功（无数据可删）
         if (userId == null) {
@@ -69,6 +71,7 @@ public class SysUserRoleServiceImpl extends ServiceImpl<SysUserRoleMapper, SysUs
      * </p>
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean deleteByUserIds(List<Long> userIdList) {
         // 空列表校验：用户ID列表为空时直接返回成功（无数据可删）
         if (CollectionUtils.isEmpty(userIdList)) {

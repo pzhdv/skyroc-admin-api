@@ -54,4 +54,17 @@ public interface SysRoleButtonService extends IService<SysRoleButton> {
      */
     boolean deleteByRoleIds(List<Long> roleIds);
 
+    /**
+     * 根据多个角色ID批量获取按钮ID列表
+     * <p>
+     * 功能说明：
+     * 1. 使用IN语句一次性查询所有角色的按钮关联
+     * 2. 返回所有角色关联的按钮ID集合
+     * </p>
+     *
+     * @param roleIds 角色ID列表，不能为空
+     * @return 所有角色关联的按钮ID集合
+     */
+    List<Long> getButtonIdsByRoleIds(List<Long> roleIds);
+
 }

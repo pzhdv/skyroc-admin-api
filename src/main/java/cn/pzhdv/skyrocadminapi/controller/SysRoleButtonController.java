@@ -1,5 +1,6 @@
 package cn.pzhdv.skyrocadminapi.controller;
 
+import cn.pzhdv.skyrocadminapi.annotation.ApiLog;
 import cn.pzhdv.skyrocadminapi.entity.SysRole;
 import cn.pzhdv.skyrocadminapi.result.Result;
 import cn.pzhdv.skyrocadminapi.result.ResultCode;
@@ -21,6 +22,14 @@ import javax.validation.constraints.Min;
  * 角色-按钮权限关联表 前端控制器
  * </p>
  *
+ * <p>
+ * 功能说明：
+ *  1. 提供角色与按钮权限的关联管理
+ *  2. 根据角色ID查询已授权的按钮ID列表
+ *  3. 更新角色的按钮权限（先删后增）
+ *  4. 用于后台权限配置页面的按钮权限分配
+ * </p>
+ *
  * @author PanZonghui
  * @since 2026-05-06 13:39:50
  */
@@ -37,10 +46,20 @@ public class SysRoleButtonController {
 
     /**
      * 根据角色ID获取按钮列表
+     * <p>
+     * 业务逻辑：
+     * 1. 校验角色是否存在
+     * 2. 查询该角色已绑定的所有按钮ID
+     * 3. 封装返回给前端用于权限回显
+     * </p>
+     *
+     * @param roleId 角色ID（≥1）
+     * @return 角色按钮权限VO（包含角色ID + 按钮ID列表）
      */
+    @ApiLog("根据角色ID获取按钮权限列表")
     @ApiOperation(
             value = "根据角色ID获取按钮列表",
-            notes = "根据角色ID从角色按钮中间表查询出角色拥有的按钮ID列表。",
+            notes = "根据角色ID从角色按钮中间表查询出角色拥有的按钮ID列表，用于权限配置页面回显。",
             produces = "application/json"
     )
     @ApiImplicitParams({
@@ -78,7 +97,18 @@ public class SysRoleButtonController {
 
     /**
      * 更新角色按钮权限
+     * <p>
+     * 业务逻辑：
+     * 1. 校验角色ID是否为空、角色是否存在
+     * 2. 删除该角色原有所有按钮权限关联
+     * 3. 批量插入新的按钮权限关联
+     * 4. 完成角色按钮权限的重新分配
+     * </p>
+     *
+     * @param roleButtonVO 角色按钮权限VO（角色ID + 按钮ID列表）
+     * @return 更新结果
      */
+    @ApiLog("更新角色按钮权限")
     @ApiOperation(
             value = "更新角色按钮权限",
             notes = "更新角色的按钮权限。先删除该角色的所有旧按钮关联，再批量插入新的按钮关联。",
@@ -111,7 +141,7 @@ public class SysRoleButtonController {
             return ResultUtil.error(ResultCode.DATA_NOT_FOUND, "角色不存在");
         }
 
-        // 3. 更新角色按钮关联
+        // 3. 更新角色按钮关联（先删后增）
         boolean updateSuccess = sysRoleButtonService.updateRoleButtons(roleId, roleButtonVO.getButtonIdList());
         if (!updateSuccess) {
             log.error("【更新角色按钮权限】失败 | 更新按钮关联失败 | 角色ID: {}", roleId);

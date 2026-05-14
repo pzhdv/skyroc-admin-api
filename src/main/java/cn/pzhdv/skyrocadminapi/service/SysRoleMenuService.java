@@ -68,4 +68,17 @@ public interface SysRoleMenuService extends IService<SysRoleMenu> {
      * @return 删除是否成功
      */
     boolean deleteByRoleIds(List<Long> roleIds);
+
+    /**
+     * 根据多个角色ID批量获取菜单ID列表（优化N+1查询）
+     * <p>
+     * 功能说明：
+     * 1. 使用IN语句一次性查询所有角色的菜单关联
+     * 2. 返回所有角色关联的菜单ID集合
+     * </p>
+     *
+     * @param roleIds 角色ID列表，不能为空
+     * @return 所有角色关联的菜单ID集合
+     */
+    List<Long> getMenuIdsByRoleIds(List<Long> roleIds);
 }

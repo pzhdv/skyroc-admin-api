@@ -1,5 +1,6 @@
 package cn.pzhdv.skyrocadminapi.controller;
 
+import cn.pzhdv.skyrocadminapi.annotation.ApiLog;
 import cn.pzhdv.skyrocadminapi.constant.RedisKey;
 import cn.pzhdv.skyrocadminapi.dto.common.BatchDeleteReq;
 import cn.pzhdv.skyrocadminapi.dto.system.user.UserRegisterDTO;
@@ -15,6 +16,7 @@ import cn.pzhdv.skyrocadminapi.utils.Md5Util;
 import cn.pzhdv.skyrocadminapi.utils.PasswordUtil;
 import cn.pzhdv.skyrocadminapi.utils.RedisUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
 import io.swagger.annotations.*;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +54,7 @@ public class SystemUserController {
     private final RedisUtils redisUtils;
 
 
+    @ApiLog("分页查询用户列表")
     @ApiOperation(
             value = "用户列表条件分页查询",
             notes = "支持用户名、性别、昵称、手机号、邮箱、用户状态等条件，默认分页10条,页页码≥1，每页条数≥1（无上限）",
@@ -127,7 +130,8 @@ public class SystemUserController {
         String cacheKey = RedisKey.SYSTEM_USER_PAGE_KEY + buildUserListCacheKey(userName, userGender, userNick, userPhone, userEmail, status, current, size);
 
         // 尝试从缓存获取
-        Page<SystemUser> cachedPage = redisUtils.get(cacheKey, Page.class);
+        Page<SystemUser> cachedPage = redisUtils.get(cacheKey, new TypeReference<>() {
+        });
         if (cachedPage != null) {
             log.debug("【用户列表】命中缓存 | key: {}", cacheKey);
             return ResultUtil.ok(cachedPage);
@@ -155,6 +159,7 @@ public class SystemUserController {
         return Md5Util.md5Of(userName, userGender, userNick, userPhone, userEmail, status, current, size);
     }
 
+    @ApiLog("根据ID获取用户详情")
     @ApiOperation(
             value = "根据 ID获取用户详细信息",
             notes = "根据用户 ID查询用户详细信息",
@@ -201,6 +206,7 @@ public class SystemUserController {
         return ResultUtil.ok(user);
     }
 
+    @ApiLog("校验用户名是否存在")
     @ApiOperation(
             value = "检查用户名是否存在",
             notes = "检查用户用户名是否存在",
@@ -236,6 +242,7 @@ public class SystemUserController {
         return ResultUtil.ok(exists);
     }
 
+    @ApiLog("校验用户邮箱是否存在")
     @ApiOperation(
             value = "检查用户邮箱是否存在",
             notes = "检查用户邮箱是否存在",
@@ -271,6 +278,7 @@ public class SystemUserController {
         return ResultUtil.ok(exists);
     }
 
+    @ApiLog("校验用户手机号是否存在")
     @ApiOperation(
             value = "检查用户手机号是否存在",
             notes = "检查用户手机号是否存在",
@@ -307,6 +315,7 @@ public class SystemUserController {
     }
 
 
+    @ApiLog("用户注册")
     @ApiOperation(
             value = "用户注册",
             notes = "系统用户注册（用户名唯一，密码自动加密存储）",
@@ -367,6 +376,7 @@ public class SystemUserController {
         return ResultUtil.ok(true);
     }
 
+    @ApiLog("修改用户信息")
     @ApiOperation(
             value = "修改用户信息",
             notes = "更新系统用户信息（用户名/手机号/邮箱需全局唯一，支持修改用户名）",
@@ -462,6 +472,7 @@ public class SystemUserController {
         return ResultUtil.ok(true);
     }
 
+    @ApiLog("删除系统用户")
     @ApiOperation(
             value = "删除系统用户",
             notes = "根据用户ID删除系统用户（谨慎操作，会影响登录权限）",
@@ -507,6 +518,7 @@ public class SystemUserController {
         return ResultUtil.ok(true);
     }
 
+    @ApiLog("批量删除系统用户")
     @ApiOperation(
             value = "批量删除系统用户",
             notes = "批量删除系统用户（谨慎操作，ID≥1）",

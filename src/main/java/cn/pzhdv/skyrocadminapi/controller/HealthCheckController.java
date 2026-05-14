@@ -1,6 +1,6 @@
 package cn.pzhdv.skyrocadminapi.controller;
 
-import cn.pzhdv.skyrocadminapi.entity.SysMenu;
+import cn.pzhdv.skyrocadminapi.annotation.ApiLog;
 import cn.pzhdv.skyrocadminapi.result.Result;
 import cn.pzhdv.skyrocadminapi.result.ResultCode;
 import cn.pzhdv.skyrocadminapi.result.ResultUtil;
@@ -40,6 +40,7 @@ public class HealthCheckController {
     private final SysMenuService sysMenuService;
     private final RedisUtils redisUtils;
 
+    @ApiLog("服务健康检查")
     @ApiOperation(value = "测试 MySQL 和 Redis 连接", notes = "测试 MySQL 数据库连接和 Redis 连接是否正常，返回测试结果", produces = "application/json")
     @GetMapping("/check")
     public Result<Map<String, Object>> healthCheck() {
@@ -59,7 +60,7 @@ public class HealthCheckController {
         result.put("status", allHealthy ? "healthy" : "unhealthy");
         result.put("timestamp", currentTime);
 
-        log.info("【健康检查】MySQL状态: {}, Redis状态: {}, 整体状态: {}", 
+        log.info("【健康检查】MySQL状态: {}, Redis状态: {}, 整体状态: {}",
                 mysqlResult.get("status"), redisResult.get("status"), result.get("status"));
 
         if (allHealthy) {
@@ -113,12 +114,11 @@ public class HealthCheckController {
             redisUtils.set(testKey, testValue, 60); // 设置60秒过期
 
             // 测试读取
-            Object readValueObj = redisUtils.get(testKey);
+            String readValue = redisUtils.get(testKey, String.class);
             long endTime = System.currentTimeMillis();
             long responseTime = endTime - startTime;
 
             // 验证读取的值是否正确
-            String readValue = readValueObj != null ? readValueObj.toString() : null;
             if (testValue.equals(readValue)) {
                 // 清理测试数据
                 redisUtils.del(testKey);
@@ -140,4 +140,3 @@ public class HealthCheckController {
         return result;
     }
 }
-

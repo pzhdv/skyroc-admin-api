@@ -91,6 +91,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
      * </p>
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean deleteByRoleId(Long roleId) {
         LambdaQueryWrapper<SysRoleMenu> deleteWrapper = new LambdaQueryWrapper<>();
         deleteWrapper.eq(SysRoleMenu::getRoleId, roleId);
@@ -114,6 +115,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
      * </p>
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean deleteByRoleIds(List<Long> roleIds) {
         if (CollectionUtils.isEmpty(roleIds)) {
             return true;
@@ -128,5 +130,26 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         }
         // 有记录则执行删除
         return this.remove(deleteWrapper);
+    }
+
+    /**
+     * 根据多个角色ID批量获取菜单ID列表（优化N+1查询）
+     */
+    @Override
+    public List<Long> getMenuIdsByRoleIds(List<Long> roleIds) {
+        if (CollectionUtils.isEmpty(roleIds)) {
+            return Collections.emptyList();
+        }
+        LambdaQueryWrapper<SysRoleMenu> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(SysRoleMenu::getRoleId, roleIds);
+        List<SysRoleMenu> roleMenus = this.list(queryWrapper);
+
+        if (CollectionUtils.isEmpty(roleMenus)) {
+            return Collections.emptyList();
+        }
+
+        return roleMenus.stream()
+                .map(SysRoleMenu::getMenuId)
+                .collect(Collectors.toList());
     }
 }

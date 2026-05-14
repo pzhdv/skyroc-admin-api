@@ -1,6 +1,6 @@
 package cn.pzhdv.skyrocadminapi.controller;
 
-
+import cn.pzhdv.skyrocadminapi.annotation.ApiLog;
 import cn.pzhdv.skyrocadminapi.dto.auth.LoginDTO;
 import cn.pzhdv.skyrocadminapi.dto.auth.RefreshTokenDTO;
 import cn.pzhdv.skyrocadminapi.entity.SysButton;
@@ -27,7 +27,6 @@ import cn.pzhdv.skyrocadminapi.utils.JwtTokenUtil;
 import cn.pzhdv.skyrocadminapi.utils.PasswordUtil;
 import cn.pzhdv.skyrocadminapi.constant.StatusConstants;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
 import io.swagger.annotations.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,8 +36,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotEmpty;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -129,13 +126,8 @@ public class AuthController {
             return buttonAuthList;
         }
 
-        Set<Long> allButtonIds = new HashSet<>();
-        for (Long roleId : roleIds) {
-            List<Long> buttonIds = sysRoleButtonService.getButtonIdsByRoleId(roleId);
-            if (!CollectionUtils.isEmpty(buttonIds)) {
-                allButtonIds.addAll(buttonIds);
-            }
-        }
+        // 优化：一次查询所有角色的按钮关联
+        List<Long> allButtonIds = sysRoleButtonService.getButtonIdsByRoleIds(roleIds);
 
         if (!allButtonIds.isEmpty()) {
             LambdaQueryWrapper<SysButton> buttonWrapper = new LambdaQueryWrapper<>();
@@ -154,12 +146,24 @@ public class AuthController {
      * 获取用户默认首页路径
      */
     private String getHomePath(List<SysRole> validRoles) {
-        for (SysRole role : validRoles) {
-            if (role.getDefaultHomePageId() != null && role.getDefaultHomePageId() > 0) {
-                SysMenu homeMenu = sysMenuService.getById(role.getDefaultHomePageId());
-                if (homeMenu != null && StringUtils.hasText(homeMenu.getRoutePath())) {
-                    return homeMenu.getRoutePath();
-                }
+        // 1. 收集所有角色的默认首页ID
+        List<Long> homePageIds = validRoles.stream()
+                .filter(role -> role.getDefaultHomePageId() != null && role.getDefaultHomePageId() > 0)
+                .map(SysRole::getDefaultHomePageId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        if (homePageIds.isEmpty()) {
+            return null;
+        }
+
+        // 2. 一次批量查询所有首页菜单
+        List<SysMenu> homeMenus = sysMenuService.listByIds(homePageIds);
+
+        // 3. 返回第一个有效的首页路径
+        for (SysMenu menu : homeMenus) {
+            if (menu != null && StringUtils.hasText(menu.getRoutePath())) {
+                return menu.getRoutePath();
             }
         }
         return null;
@@ -167,18 +171,12 @@ public class AuthController {
 
     // ==================== 业务接口 ====================
 
-    /**
-     * 用户登录认证
-     *
-     * @param loginDTO 登录信息（用户名+密码）
-     * @return 登录结果，包含访问令牌、刷新令牌
-     */
+    @ApiLog("用户登录认证")
     @ApiOperation(
             value = "用户登录认证",
             notes = "系统用户登录验证，支持用户名密码登录，返回访问令牌和刷新令牌，用于后续API调用认证",
             produces = "application/json")
     @PostMapping("login")
-    @ApiOperationSupport(includeParameters = {"userName", "password"})
     public Result<SystemUserAuthTokenVO> login(
             @ApiParam(value = "用户登录信息（用户名+密码）", required = true)
             @RequestBody
@@ -219,9 +217,15 @@ public class AuthController {
         String refreshToken;
         Integer accessTokenExpire;
         try {
-            accessToken = jwtTokenUtil.generateAccessToken(String.valueOf(findSystemUser.getUserId()));
-            refreshToken =
-                    jwtTokenUtil.generateRefreshToken(String.valueOf(findSystemUser.getUserId()));
+            // 登录时只查一次库，把 userId + username 都放进 Token
+            String userId = String.valueOf(findSystemUser.getUserId());
+            String username = findSystemUser.getUserName(); // 从数据库查出来的用户名
+
+            // 生成双令牌
+            accessToken = jwtTokenUtil.generateAccessToken(userId, username);
+            refreshToken = jwtTokenUtil.generateRefreshToken(userId, username);
+
+            // 获取过期时间
             accessTokenExpire = jwtTokenUtil.getAccessTokenExpireSeconds();
         } catch (Exception e) {
             log.error("登录失败 | Token生成异常 | 用户名: {}", userName, e);
@@ -238,6 +242,7 @@ public class AuthController {
         return ResultUtil.ok(response);
     }
 
+    @ApiLog("获取当前用户信息及权限")
     @ApiOperation(
             value = "获取当前用户信息及权限",
             notes = "获取当前登录的用户信息，包含角色,按钮权限（需要JWT Token验证）",
@@ -247,7 +252,7 @@ public class AuthController {
         try {
             Long userId = extractUserId(request);
             if (userId == null) {
-                return ResultUtil.error(ResultCode.INVALID_TOKEN, "用户身份信息异常");
+                return ResultUtil.error(ResultCode.TOKEN_INVALID, "用户身份信息异常");
             }
 
             SystemUser user = baseService.getById(userId);
@@ -268,15 +273,9 @@ public class AuthController {
 
             String homePath = getHomePath(validRoles);
 
-            boolean hasRoutePermission = false;
-
-            for (Long roleId : roleIds) {
-                List<Long> menuIds = sysRoleMenuService.getMenuIdsByRoleId(roleId);
-                if (!CollectionUtils.isEmpty(menuIds)) {
-                    hasRoutePermission = true;
-                    break;
-                }
-            }
+            // 一次查询所有角色的菜单ID
+            List<Long> allMenuIds = sysRoleMenuService.getMenuIdsByRoleIds(roleIds);
+            boolean hasRoutePermission = !CollectionUtils.isEmpty(allMenuIds);
 
             LoginUserInfoVo loginUserInfoVo = new LoginUserInfoVo();
             loginUserInfoVo.setUserId(user.getUserId());
@@ -298,6 +297,7 @@ public class AuthController {
         }
     }
 
+    @ApiLog("刷新访问令牌和刷新令牌")
     @ApiOperation(
             value = "刷新访问令牌和刷新令牌",
             notes = "使用有效的刷新令牌获取新的访问令牌和刷新令牌，提高安全性并延长用户会话有效期",
@@ -354,6 +354,7 @@ public class AuthController {
     }
 
 
+    @ApiLog("获取系统菜单路由信息")
     @ApiOperation(
             value = "获取系统菜单路由信息",
             notes = "根据当前登录用户的角色权限，获取用户可访问的菜单路由树形结构和默认首页路径。需要JWT Token验证。",
@@ -363,7 +364,7 @@ public class AuthController {
         try {
             Long userId = extractUserId(request);
             if (userId == null) {
-                return ResultUtil.error(ResultCode.INVALID_TOKEN, "用户身份信息异常");
+                return ResultUtil.error(ResultCode.TOKEN_INVALID, "用户身份信息异常");
             }
 
             List<SysRole> validRoles = getUserValidRoles(userId);
@@ -378,20 +379,15 @@ public class AuthController {
 
             List<Long> roleIds = extractRoleIds(validRoles);
 
-            Set<Long> allMenuIds = new HashSet<>();
-            for (Long roleId : roleIds) {
-                List<Long> menuIds = sysRoleMenuService.getMenuIdsByRoleId(roleId);
-                if (!CollectionUtils.isEmpty(menuIds)) {
-                    allMenuIds.addAll(menuIds);
-                }
-            }
+            // 一次查询所有角色的菜单ID
+            List<Long> allMenuIds = sysRoleMenuService.getMenuIdsByRoleIds(roleIds);
 
             List<SysMenu> menuRoutes;
             if (allMenuIds.isEmpty()) {
                 log.warn("获取菜单路由失败 | 角色未分配菜单权限 | 用户ID: {}", userId);
                 menuRoutes = new ArrayList<>();
             } else {
-                menuRoutes = sysMenuService.getMenuRoutesByIds(new ArrayList<>(allMenuIds));
+                menuRoutes = sysMenuService.getMenuRoutesByIds(allMenuIds);
                 log.info("获取菜单路由成功 | 用户ID: {}, 菜单数量: {}", userId, menuRoutes.size());
             }
 

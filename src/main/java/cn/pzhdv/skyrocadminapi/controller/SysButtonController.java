@@ -1,5 +1,6 @@
 package cn.pzhdv.skyrocadminapi.controller;
 
+import cn.pzhdv.skyrocadminapi.annotation.ApiLog;
 import cn.pzhdv.skyrocadminapi.constant.RedisKey;
 import cn.pzhdv.skyrocadminapi.dto.common.BatchDeleteReq;
 import cn.pzhdv.skyrocadminapi.dto.system.button.SysButtonAddDTO;
@@ -15,6 +16,7 @@ import cn.pzhdv.skyrocadminapi.utils.CacheExpireUtil;
 import cn.pzhdv.skyrocadminapi.utils.Md5Util;
 import cn.pzhdv.skyrocadminapi.utils.RedisUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fasterxml.jackson.core.type.TypeReference;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -69,6 +71,7 @@ public class SysButtonController {
     private final RedisUtils redisUtils;
 
 
+    @ApiLog("查询按钮权限列表")
     @ApiOperation(value = "按钮权限列表查询", notes = "支持ID、按钮状态条件查询，返回完整列表（不分页）", produces = "application/json")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "menuId", value = "所属ID（精准匹配）", paramType = "query", dataType = "Long", dataTypeClass = Long.class, example = "1"),
@@ -83,8 +86,8 @@ public class SysButtonController {
         String cacheKey = RedisKey.SYS_BUTTON_LIST_KEY + buildButtonListCacheKey(menuId, status);
 
         // 尝试从缓存获取
-        @SuppressWarnings("unchecked")
-        List<SysButton> cachedList = (List<SysButton>) redisUtils.get(cacheKey);
+        List<SysButton> cachedList = redisUtils.get(cacheKey, new TypeReference<>() {
+        });
         if (cachedList != null) {
             log.debug("【查询按钮权限列表】命中缓存 | key: {}", cacheKey);
             return ResultUtil.ok(cachedList);
@@ -107,6 +110,7 @@ public class SysButtonController {
     }
 
 
+    @ApiLog("分页查询按钮权限列表")
     @ApiOperation(value = "按钮权限列表条件分页查询", notes = "支持ID、按钮状态等条件分页查询；默认分页10条/页，页码≥1，每页条数≥1", produces = "application/json")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "menuId", value = "所属ID（精准匹配）", paramType = "query", dataType = "Long", dataTypeClass = Long.class, example = "1"),
@@ -125,7 +129,7 @@ public class SysButtonController {
         String cacheKey = RedisKey.SYS_BUTTON_PAGE_KEY + buildButtonPageCacheKey(menuId, status, current, size);
 
         // 尝试从缓存获取
-        Page<SysButton> cachedPage = redisUtils.get(cacheKey, Page.class);
+        Page<SysButton> cachedPage = redisUtils.get(cacheKey, new TypeReference<>() {});
         if (cachedPage != null) {
             log.debug("【分页查询按钮权限列表】命中缓存 | key: {}", cacheKey);
             return ResultUtil.ok(cachedPage);
@@ -149,11 +153,12 @@ public class SysButtonController {
     }
 
 
+    @ApiLog("获取按钮权限详情")
     @ApiOperation(value = "根据ID获取按钮权限详情", notes = "根据按钮ID查询按钮权限详细信息，同时返回关联的名称", produces = "application/json")
     @ApiImplicitParams({@ApiImplicitParam(name = "buttonId", value = "按钮ID（必须为正整数）", paramType = "query", dataType = "Long", required = true, example = "1", dataTypeClass = Long.class)})
     @GetMapping("getSysButtonDetailById")
     public Result<SysButton> getSysButtonDetailById(
-            @RequestParam(value = "buttonId", required = true) @Min(value = 1, message = "按钮ID必须为正整数") Long buttonId) {
+            @RequestParam(value = "buttonId") @Min(value = 1, message = "按钮ID必须为正整数") Long buttonId) {
 
         // 尝试从缓存获取
         String cacheKey = RedisKey.SYS_BUTTON_DETAIL_KEY + buttonId;
@@ -182,6 +187,7 @@ public class SysButtonController {
     }
 
 
+    @ApiLog("新增按钮权限")
     @ApiOperation(value = "新增按钮权限", notes = "按钮编码需全局唯一；创建/更新时间由系统自动填充，无需前端传递", produces = "application/json")
     @PostMapping("/add")
     public Result<Boolean> addSysButton(@RequestBody @Valid SysButtonAddDTO addDTO) {
@@ -227,6 +233,7 @@ public class SysButtonController {
     }
 
 
+    @ApiLog("编辑按钮权限")
     @ApiOperation(value = "编辑按钮权限", notes = "1. 按钮ID为必填，用于定位待修改按钮；2. 按钮编码若修改需保证全局唯一；3. 创建时间不允许修改；4. 更新时间由系统自动填充", produces = "application/json")
     @PutMapping("/edit")
     public Result<Boolean> editSysButton(@RequestBody @Valid SysButtonEditDTO editDTO) {
@@ -285,6 +292,7 @@ public class SysButtonController {
     }
 
 
+    @ApiLog("删除按钮权限")
     @ApiOperation(value = "删除按钮权限", notes = "根据按钮ID删除按钮权限（逻辑删除，删除后相关权限将失效）", produces = "application/json")
     @DeleteMapping("delete/{buttonId}")
     public Result<Boolean> deleteById(
@@ -317,6 +325,7 @@ public class SysButtonController {
     }
 
 
+    @ApiLog("批量删除按钮权限")
     @ApiOperation(value = "批量删除按钮权限", notes = "批量删除按钮权限（谨慎操作）；若部分ID不存在，会返回不存在的ID列表提示，不执行删除", produces = "application/json")
     @DeleteMapping("delete/batch")
     public Result<Boolean> deleteBatch(@RequestBody @Valid BatchDeleteReq deleteReq) {
@@ -363,6 +372,7 @@ public class SysButtonController {
     }
 
 
+    @ApiLog("校验按钮编码唯一性")
     @ApiOperation(value = "校验按钮编码唯一性", notes = "新增/编辑按钮时校验按钮编码是否已存在，返回true表示已存在，false表示不存在；会校验编码格式", produces = "application/json")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "buttonCode", value = "按钮编码（如 user:add、system:menu:add）", paramType = "query", dataType = "String", required = true, dataTypeClass = String.class)
@@ -370,7 +380,7 @@ public class SysButtonController {
     @GetMapping("checkButtonCodeExists")
     public Result<Boolean> checkButtonCodeExists(
             @ApiParam(value = "按钮编码", required = true, example = "user:add")
-            @RequestParam(value = "buttonCode", required = true) String buttonCode) {
+            @RequestParam(value = "buttonCode") String buttonCode) {
 
         if (buttonCode == null || buttonCode.trim().isEmpty()) {
             log.warn("【校验按钮编码唯一性】失败 | 按钮编码为空");

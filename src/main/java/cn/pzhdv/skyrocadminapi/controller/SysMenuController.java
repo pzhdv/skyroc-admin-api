@@ -1,5 +1,6 @@
 package cn.pzhdv.skyrocadminapi.controller;
 
+import cn.pzhdv.skyrocadminapi.annotation.ApiLog;
 import cn.pzhdv.skyrocadminapi.constant.MenuConstants;
 import cn.pzhdv.skyrocadminapi.constant.RedisKey;
 import cn.pzhdv.skyrocadminapi.entity.SysMenu;
@@ -13,6 +14,7 @@ import cn.pzhdv.skyrocadminapi.utils.RedisUtils;
 import cn.pzhdv.skyrocadminapi.vo.common.TreeVO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -48,6 +50,7 @@ public class SysMenuController {
     private final RedisUtils redisUtils;
 
 
+    @ApiLog("分页查询菜单树结构列表")
     @ApiOperation(value = "查询菜单列表并构建树结构（分页）", notes = "支持菜单名称、菜单类型、菜单状态等条件查询，返回分页的树形结构菜单列表", produces = "application/json")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "menuName", value = "菜单名称（模糊匹配）", paramType = "query", dataType = "String", dataTypeClass = String.class),
@@ -75,7 +78,8 @@ public class SysMenuController {
         String cacheKey = RedisKey.SYS_MENU_PAGE_KEY + Md5Util.md5Of(menuName, menuType, status, parentId, current, size);
 
         // 尝试从缓存获取
-        Page<SysMenu> cachedPage = redisUtils.get(cacheKey, Page.class);
+        Page<SysMenu> cachedPage = redisUtils.get(cacheKey, new TypeReference<>() {
+        });
         if (cachedPage != null) {
             log.debug("【菜单分页列表】命中缓存 | key: {}", cacheKey);
             return ResultUtil.ok(cachedPage);
@@ -93,10 +97,11 @@ public class SysMenuController {
         return ResultUtil.ok(menuPage);
     }
 
+    @ApiLog("获取菜单详情")
     @ApiOperation(value = "根据ID获取菜单详细信息", notes = "根据菜单ID查询菜单详细信息", produces = "application/json")
     @ApiImplicitParams({@ApiImplicitParam(name = "menuId", value = "菜单ID（必须为正整数）", paramType = "query", dataType = "Long", required = true, example = "2", dataTypeClass = Long.class)})
     @GetMapping("getMenuDetailById")
-    public Result<SysMenu> getMenuDetailById(@RequestParam(value = "menuId", required = true) @Min(value = 1, message = "菜单ID必须为正整数") Long menuId) {
+    public Result<SysMenu> getMenuDetailById(@RequestParam(value = "menuId") @Min(value = 1, message = "菜单ID必须为正整数") Long menuId) {
 
         // 生成缓存 key
         String cacheKey = RedisKey.SYS_MENU_DETAIL_KEY + menuId;
@@ -122,6 +127,7 @@ public class SysMenuController {
         return ResultUtil.ok(menu);
     }
 
+    @ApiLog("新增菜单")
     @ApiOperation(value = "新增菜单", notes = "新增系统菜单", produces = "application/json")
     @ApiOperationSupport(ignoreParameters = {"menuId", "children", "createTime", "updateTime", "deleted"})
     @PostMapping("add")
@@ -161,6 +167,7 @@ public class SysMenuController {
         return ResultUtil.ok(true);
     }
 
+    @ApiLog("编辑菜单")
     @ApiOperation(value = "编辑菜单", notes = "更新系统菜单信息（menuId为必填，用于定位待修改菜单；createdTime不允许修改，updatedTime由系统自动填充，children字段会被忽略）", produces = "application/json")
     @ApiOperationSupport(ignoreParameters = {"children", "createTime", "updateTime", "deleted"})
     @PutMapping("edit")
@@ -226,6 +233,7 @@ public class SysMenuController {
 
     }
 
+    @ApiLog("删除菜单")
     @ApiOperation(value = "删除菜单", notes = "根据菜单ID删除系统菜单（谨慎操作，删除后子菜单将无法访问）", produces = "application/json")
     @DeleteMapping("delete/{menuId}")
     public Result<Boolean> deleteMenu(@PathVariable @ApiParam(name = "menuId", value = "菜单ID（≥1）", required = true) @Min(value = 1, message = "菜单ID必须为正整数") Long menuId) {
@@ -240,7 +248,6 @@ public class SysMenuController {
         // 2. 校验是否存在子菜单
         LambdaQueryWrapper<SysMenu> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SysMenu::getParentId, menuId);
-        queryWrapper.eq(SysMenu::getDeleted, MenuConstants.NOT_DELETED);
         long childCount = sysMenuService.count(queryWrapper);
         if (childCount > 0) {
             log.warn("【删除菜单】失败 | 存在子菜单，无法删除 | 菜单ID: {}, 菜单名称: {}, 子菜单数量: {}", menuId, menu.getMenuName(), childCount);
@@ -265,6 +272,7 @@ public class SysMenuController {
         return ResultUtil.ok(true);
     }
 
+    @ApiLog("获取菜单树形结构")
     @ApiOperation(
             value = "获取菜单树形结构",
             notes = "获取整个菜单树形结构",
@@ -274,8 +282,8 @@ public class SysMenuController {
     public Result<List<TreeVO>> getMenuTree() {
 
         // 尝试从缓存获取
-        @SuppressWarnings("unchecked")
-        List<TreeVO> cachedTree = (List<TreeVO>) redisUtils.get(RedisKey.SYS_MENU_TREE_KEY);
+        List<TreeVO> cachedTree = redisUtils.get(RedisKey.SYS_MENU_TREE_KEY, new TypeReference<>() {
+        });
         if (cachedTree != null) {
             log.debug("【获取菜单树形结构】命中缓存 | key: {}", RedisKey.SYS_MENU_TREE_KEY);
             return ResultUtil.ok(cachedTree);
@@ -290,6 +298,7 @@ public class SysMenuController {
         return ResultUtil.ok(menuTree);
     }
 
+    @ApiLog("获取所有页面菜单")
     @ApiOperation(
             value = "获取所有页面菜单",
             notes = "获取所有启用的页面菜单（菜单类型=2），返回平铺的菜单列表，按排序字段和创建时间排序。适用于页面选择器、页面权限配置等场景。",
@@ -299,8 +308,8 @@ public class SysMenuController {
     public Result<List<SysMenu>> getAllPages() {
 
         // 尝试从缓存获取
-        @SuppressWarnings("unchecked")
-        List<SysMenu> cachedPages = (List<SysMenu>) redisUtils.get(RedisKey.SYS_MENU_ALL_PAGES_KEY);
+        List<SysMenu> cachedPages = redisUtils.get(RedisKey.SYS_MENU_ALL_PAGES_KEY, new TypeReference<>() {
+        });
         if (cachedPages != null) {
             log.debug("【获取所有页面菜单】命中缓存 | key: {}", RedisKey.SYS_MENU_ALL_PAGES_KEY);
             return ResultUtil.ok(cachedPages);

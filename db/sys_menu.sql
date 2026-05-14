@@ -139,7 +139,7 @@ VALUES (2, '切换权限', 'function_toggle-auth', '/function/toggle-auth', 'pag
         0, NULL, NULL);
 
 -- ----------------------------
--- 3. 系统管理（用户、角色、菜单、按钮）
+-- 3. 系统管理（用户、角色、菜单、按钮、日志）
 -- ----------------------------
 INSERT INTO `sys_menu` (`menu_type`, `menu_name`, `route_name`, `route_path`, `component`, `layout`, `i18n_key`,
                         `order`, `icon_type`, `icon`, `status`, `keep_alive`, `constant`, `href`, `hide_in_menu`,
@@ -194,6 +194,13 @@ INSERT INTO `sys_menu` (`menu_type`, `menu_name`, `route_name`, `route_path`, `c
                         `parent_id`, `active_menu`, `deleted`, `multi_tab`, `fixed_index_in_tab`, `query`)
 VALUES (2, '按钮管理', 'manage_button', '/manage/button', 'page.(base)_manage_button', '', 'route.(base)_manage_button',
         4, 1, 'streamline-sharp-color:buttons-all', 1, 0, 0, '', 0, @manage_parent_id, NULL, 0, 0, NULL, '[]');
+
+-- 日志管理
+INSERT INTO `sys_menu` (`menu_type`, `menu_name`, `route_name`, `route_path`, `component`, `layout`, `i18n_key`,
+                        `order`, `icon_type`, `icon`, `status`, `keep_alive`, `constant`, `href`, `hide_in_menu`,
+                        `parent_id`, `active_menu`, `deleted`, `multi_tab`, `fixed_index_in_tab`, `query`)
+VALUES (2, '操作日志', 'manage_operation-log', '/manage/operation-log', 'page.(base)_manage_operation-log', '', 'route.(base)_manage_operation-log',
+        5, 1, 'material-symbols:history', 1, 0, 0, '', 0, @manage_parent_id, NULL, 0, 0, NULL, '[]');
 
 -- ----------------------------
 -- 4. 多级菜单

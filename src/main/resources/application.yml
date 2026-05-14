@@ -6,7 +6,7 @@ server:
     max-swallow-size: -1 # 关闭Tomcat对大请求的限制（默认2MB）
     max-http-form-post-size: -1  # 不限制表单提交大小
   servlet:
-    context-path: /  # 注意前缀的斜杠，代表根路径下的子路径
+    context-path: /skyrocApi  # 注意前缀的斜杠，代表根路径下的子路径
 
 # ========================= Spring 基础配置 =========================
 spring:

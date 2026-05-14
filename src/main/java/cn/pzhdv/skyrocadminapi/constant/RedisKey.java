@@ -23,8 +23,6 @@ public class RedisKey {
   public static final String SYS_ROLE_ALL_KEY = "sys:role:all";
   public static final String SYS_ROLE_CODE_EXISTS_KEY = "sys:role:code:exists:";
 
-  /** 角色按钮权限相关的key */
-  public static final String SYS_ROLE_BUTTON_KEY = "sys:role:button:";
 
   /** 系统按钮权限相关的key */
   public static final String SYS_BUTTON_PAGE_KEY = "sys:button:page:";

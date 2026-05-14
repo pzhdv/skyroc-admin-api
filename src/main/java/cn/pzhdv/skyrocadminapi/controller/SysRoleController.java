@@ -1,5 +1,6 @@
 package cn.pzhdv.skyrocadminapi.controller;
 
+import cn.pzhdv.skyrocadminapi.annotation.ApiLog;
 import cn.pzhdv.skyrocadminapi.constant.RedisKey;
 import cn.pzhdv.skyrocadminapi.dto.common.BatchDeleteReq;
 import cn.pzhdv.skyrocadminapi.dto.system.role.SysRoleAddDTO;
@@ -16,6 +17,7 @@ import cn.pzhdv.skyrocadminapi.utils.Md5Util;
 import cn.pzhdv.skyrocadminapi.utils.RedisUtils;
 import cn.pzhdv.skyrocadminapi.vo.role.SysRoleSimpleVO;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fasterxml.jackson.core.type.TypeReference;
 import io.swagger.annotations.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,6 +63,7 @@ public class SysRoleController {
      * @param size     每页条数（≥1，无上限）
      * @return 分页结果（包含角色列表、总条数、总页数）
      */
+    @ApiLog("分页查询角色列表")
     @ApiOperation(value = "角色列表条件分页查询", notes = "支持角色名称、角色编码模糊匹配，角色状态精准匹配；默认分页10条/页，页码≥1，每页条数≥1（无上限）", produces = "application/json")
     @ApiImplicitParams({@ApiImplicitParam(name = "roleName", value = "角色名称（模糊匹配）", paramType = "query", dataType = "String", dataTypeClass = String.class, example = "超级管理员"), @ApiImplicitParam(name = "roleCode", value = "角色编码（模糊匹配）", paramType = "query", dataType = "String", dataTypeClass = String.class, example = "admin"), @ApiImplicitParam(name = "status", value = "角色状态(1:正常 2:禁止，精准匹配）", paramType = "query", dataType = "Byte", dataTypeClass = Byte.class, example = "1"), @ApiImplicitParam(name = "current", value = "当前页码（≥1）", paramType = "query", required = true, dataType = "Integer", dataTypeClass = Integer.class, example = "1", defaultValue = "1"), @ApiImplicitParam(name = "size", value = "每页条数（≥1，无上限）", paramType = "query", required = true, dataType = "Integer", dataTypeClass = Integer.class, example = "10", defaultValue = "10")})
     @GetMapping("/getRoleList")
@@ -70,7 +73,7 @@ public class SysRoleController {
         String cacheKey = RedisKey.SYS_ROLE_PAGE_KEY + buildRoleListCacheKey(roleName, roleCode, status, current, size);
 
         // 尝试从缓存获取
-        Page<SysRole> cachedPage = redisUtils.get(cacheKey, Page.class);
+        Page<SysRole> cachedPage = redisUtils.get(cacheKey,new TypeReference<>() {});
         if (cachedPage != null) {
             log.debug("【角色列表】命中缓存 | key: {}", cacheKey);
             return ResultUtil.ok(cachedPage);
@@ -95,14 +98,15 @@ public class SysRoleController {
         return Md5Util.md5Of(roleName, roleCode, status, current, size);
     }
 
+    @ApiLog("查询所有角色")
     @ApiOperation(value = "角色列表查询",
             notes = "仅返回角色的roleId、roleCode、roleName字段",
             produces = "application/json")
     @GetMapping("/getAllRoles")
     public Result<List<SysRoleSimpleVO>> getAllRoles() {
         // 尝试从缓存获取
-        @SuppressWarnings("unchecked")
-        List<SysRoleSimpleVO> cachedList = (List<SysRoleSimpleVO>) redisUtils.get(RedisKey.SYS_ROLE_ALL_KEY);
+        List<SysRoleSimpleVO> cachedList = redisUtils.get(RedisKey.SYS_ROLE_ALL_KEY, new TypeReference<>() {
+        });
         if (cachedList != null) {
             log.debug("【角色列表】命中缓存 | key: {}", RedisKey.SYS_ROLE_ALL_KEY);
             return ResultUtil.ok(cachedList);
@@ -138,6 +142,7 @@ public class SysRoleController {
      * @param addDTO 新增角色请求参数（包含编码、名称、状态等核心字段）
      * @return 新增结果（true:成功 false:失败）
      */
+    @ApiLog("新增系统角色")
     @ApiOperation(value = "新增系统角色", notes = "角色编码需全局唯一；创建/更新时间由系统自动填充，无需前端传递；排序权重默认传0，数值越小越靠前", produces = "application/json")
     @PostMapping("/add")
     public Result<Boolean> addRole(@RequestBody @Valid SysRoleAddDTO addDTO) {
@@ -185,6 +190,7 @@ public class SysRoleController {
      * @param editDTO 编辑角色请求参数（包含角色ID、新名称/状态/编码等字段）
      * @return 编辑结果（true:成功 false:失败）
      */
+    @ApiLog("编辑系统角色")
     @ApiOperation(value = "编辑系统角色", notes = "1. 角色ID为必填，用于定位待修改角色；2. 角色编码若修改需保证全局唯一；3. 更新时间由系统自动填充，无需传递；4. 创建时间不允许修改", produces = "application/json")
     @PutMapping("/edit")
     public Result<Boolean> editRole(@RequestBody @Valid SysRoleEditDTO editDTO) {
@@ -238,6 +244,7 @@ public class SysRoleController {
      * @param roleId 角色ID（≥1）
      * @return 删除结果（true:成功 false:失败）
      */
+    @ApiLog("删除系统角色")
     @ApiOperation(value = "删除系统角色", notes = "根据角色ID删除系统角色（谨慎操作，删除后关联权限自动失效）。删除角色时会自动删除角色菜单中间表中的关联数据。", produces = "application/json")
     @DeleteMapping("delete/{roleId}")
     public Result<Boolean> deleteById(@PathVariable @ApiParam(name = "roleId", value = "系统角色ID（≥1）", required = true) @Min(value = 1, message = "角色 ID必须为正整数") Long roleId) {
@@ -286,6 +293,7 @@ public class SysRoleController {
      * @param deleteReq 批量删除请求参数（包含角色ID列表）
      * @return 删除结果（true:成功 false:失败）
      */
+    @ApiLog("批量删除系统角色")
     @ApiOperation(value = "批量删除系统角色", notes = "批量删除系统角色（谨慎操作，ID≥1）；若部分ID不存在，会返回不存在的ID列表，不执行删除。删除角色时会自动删除角色菜单中间表中的关联数据。", produces = "application/json")
     @DeleteMapping("delete/batch")
     public Result<Boolean> deleteBatch(@RequestBody @Valid BatchDeleteReq deleteReq) {
@@ -346,6 +354,7 @@ public class SysRoleController {
     }
 
 
+    @ApiLog("校验角色编码唯一性")
     @ApiOperation(
             value = "校验角色编码唯一性",
             notes = "新增/编辑角色时校验角色编码是否已存在，返回true表示已存在，false表示不存在",
