@@ -14,7 +14,7 @@ spring:
     name: skyroc-admin-api  # 应用名称（日志文件名、服务发现、监控等）
   # 激活的环境配置（默认开发环境，可通过启动参数覆盖：--spring.profiles.active=prod）
   profiles:
-    active: dev
+    active: prod
 
   #  resources:
   #    add-mappings: false # 值为false时，不会将静态资源的URL路径添加到映射中，使404能走全局异常

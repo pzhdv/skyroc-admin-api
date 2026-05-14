@@ -16,9 +16,38 @@
 
 ## 📖 项目介绍
 
-**SkyRoc Admin API** 是配套 [skyroc-admin-react](https://github.com/pzhdv/skyroc-admin-react) 的后端 API 服务，采用 Spring Boot 2.7.6 构建，提供完整的用户认证、权限管理、菜单管理等功能。
+**SkyRoc Admin API** 是配套 [skyroc-admin-react](https://github.com/pzhdv/skyroc-admin-react) 的后台管理系统后端 API 服务，采用 Spring Boot 2.7.6 构建，提供完整的用户认证、权限管理、菜单管理等功能。
 
 > 如果这个项目对你有帮助，欢迎点个 Star 支持一下！
+
+## 🛠️ 技术栈
+
+|    分类    |      技术      |  版本   | 说明           |
+| :--------: | :------------: | :-----: | :------------- |
+| 🚀 基础框架 |  Spring Boot   |  2.7.6  | 后端核心框架   |
+| ☕ 开发语言 |      JDK       |   17    | LTS 版本       |
+| 📦 构建工具 |     Maven      |  3.6+   | 项目构建       |
+|  🗄️ 数据库  |     MySQL      |   8.x   | 关系型数据库   |
+|   🔄 ORM    |  MyBatis-Plus  | 3.5.15  | ORM 框架       |
+|   ⚡ 缓存   |     Redis      |    -    | 缓存与会话存储 |
+| 🔐 安全认证 |   JWT (JJWT)   | 0.11.5  | 无状态身份认证 |
+| 📚 API 文档 |    Knife4j     |  3.0.3  | 接口文档       |
+| ☁️ 对象存储 | 腾讯云 COS SDK | 5.6.227 | 文件上传       |
+
+---
+
+### 核心特性
+
+| 特性 | 说明 |
+|:---|:---|
+| 🔐 **双 Token 认证** | Access Token + Refresh Token 机制，支持 Token 自动续期，安全可靠 |
+| 🎭 **RBAC 权限模型** | 基于角色的访问控制，支持菜单权限 + 按钮权限细粒度控制 |
+| 📑 **动态菜单** | 支持 React Router 格式菜单配置，动态生成前端路由 |
+| 📝 **操作日志** | AOP 切面自动记录 API 操作日志，便于审计追踪 |
+| ☁️ **文件存储** | 集成腾讯云 COS，支持大文件分片上传 |
+| 📚 **API 文档** | 集成 Knife4j，提供交互式 API 文档 |
+| 🔄 **多环境配置** | 支持 dev / prod 环境切换，敏感配置不落地 |
+
 
 ---
 
@@ -62,48 +91,73 @@
 
 ---
 
-## 🛠️ 技术栈
-
-| 分类 | 技术 | 版本 | 说明 |
-|:---:|:---:|:---:|:---|
-| 🚀 基础框架 | Spring Boot | 2.7.6 | 后端核心框架 |
-| ☕ 开发语言 | JDK | 17 | LTS 版本 |
-| 📦 构建工具 | Maven | 3.6+ | 项目构建 |
-| 🗄️ 数据库 | MySQL | 8.x | 关系型数据库 |
-| 🔄 ORM | MyBatis-Plus | 3.5.15 | ORM 框架 |
-| ⚡ 缓存 | Redis | - | 缓存与会话存储 |
-| 🔐 安全认证 | JWT (JJWT) | 0.11.5 | 无状态身份认证 |
-| 📚 API 文档 | Knife4j | 3.0.3 | 接口文档 |
-| ☁️ 对象存储 | 腾讯云 COS SDK | 5.6.227 | 文件上传 |
-
----
-
 ## 📁 项目结构
 
 ```
-skyroc-admin-api
+skyroc-admin-api/
 │
 ├── src/main/java/cn/pzhdv/skyrocadminapi/
-│   ├── config/          配置类（Redis、CORS、拦截器等）
-│   ├── constant/        常量定义
-│   ├── controller/      控制器层
-│   ├── dto/             数据传输对象
-│   ├── entity/          实体类
-│   ├── exception/       异常处理
-│   ├── help/            辅助工具
-│   ├── interceptor/     JWT 拦截器
-│   ├── mapper/          Mapper 接口
-│   ├── result/          统一响应封装
-│   ├── service/         业务逻辑层
-│   ├── utils/           工具类
-│   └── vo/              视图对象
+│   ├── SkyrocAdminApiApplication.java   # Spring Boot 主入口
+│   ├── annotation/                      # 自定义注解
+│   ├── aspect/                          # AOP 切面（API 操作日志切面）
+│   ├── config/                          # 配置类
+│   │       ├── CrossConfig.java         # CORS 跨域配置
+│   │       ├── EntityMetaHandler.java   # MyBatis-Plus 自动填充
+│   │       ├── FileSizeConfig.java     # 文件上传大小验证
+│   │       ├── InterceptorConfig.java  # WebMvc 配置 + JWT 拦截器
+│   │       ├── Knife4jConfig.java       # Knife4j API 文档配置
+│   │       └── RedisConfig.java         # Redis 模板配置
+│   ├── constant/                        # 常量定义
+│   ├── context/                         # 用户上下文（ThreadLocal 存储）
+│   ├── controller/                      # 控制器层（API 入口）
+│   │       ├── AuthController.java      # 认证授权
+│   │       ├── FileUploadController.java # 文件上传（腾讯云 COS）
+│   │       ├── HealthCheckController.java # 健康检查
+│   │       ├── SysButtonController.java  # 按钮权限管理
+│   │       ├── SysMenuController.java    # 菜单管理
+│   │       ├── SysOperationLogController.java # 操作日志
+│   │       ├── SysRoleButtonController.java # 角色-按钮关联
+│   │       ├── SysRoleController.java    # 角色管理
+│   │       ├── SysRoleMenuController.java # 角色-菜单关联
+│   │       └── SystemUserController.java # 系统用户管理
+│   ├── dto/                             # 数据传输对象（请求参数封装）
+│   ├── entity/                          # 实体类（数据库表映射）
+│   │       ├── SysButton.java           # 按钮权限表
+│   │       ├── SysMenu.java             # 菜单表
+│   │       ├── SysOperationLog.java     # 操作日志表
+│   │       ├── SysRole.java             # 角色表
+│   │       ├── SysRoleButton.java       # 角色-按钮关联表
+│   │       ├── SysRoleMenu.java         # 角色-菜单关联表
+│   │       ├── SysUser.java             # 用户表
+│   │       └── SysUserRole.java         # 用户-角色关联表
+│   ├── exception/                       # 异常处理
+│   │       ├── GlobalExceptionHandler.java # 全局异常处理器
+│   │       └── BusinessException.java   # 业务异常类
+│   ├── help/                            # 代码生成器辅助类
+│   ├── interceptor/                     # JWT 拦截器
+│   │       └── JwtInterceptor.java      # Token 验证、用户信息解析
+│   ├── mapper/                          # MyBatis Mapper 接口
+│   ├── result/                          # 统一响应封装
+│   │       └── Result.java              # 统一返回格式
+│   ├── service/                         # 业务逻辑层
+│   │       ├── impl/                   # Service 实现类
+│   │       └── ISysMenuService.java     # 示例接口
+│   ├── utils/                           # 工具类
+│   │       ├── IpUtils.java            # IP 地址获取
+│   │       ├── JsonUtils.java          # JSON 序列化
+│   │       ├── JwtTokenUtil.java       # JWT 生成/验证/解析
+│   │       ├── Md5Util.java            # MD5 加密
+│   │       ├── PasswordUtil.java        # BCrypt 密码加密验证
+│   │       ├── RedisUtils.java         # Redis 操作封装
+│   │       └── ResponseUtil.java       # HTTP 响应输出
+│   └── vo/                             # 视图对象（响应数据封装）
 │
 └── src/main/resources/
-    ├── mapper/                XML 映射文件
-    ├── application.yml       主配置文件
-    ├── application-dev.yml   开发环境配置
-    ├── application-prod.yml  生产环境配置
-    └── logback-spring.xml   日志配置
+     ├── mapper/                      # MyBatis XML 映射文件
+     ├── application.yml              # 主配置文件
+     ├── application-dev-example.yml  # 开发环境配置示例
+     ├── application-prod-example.yml # 生产环境配置示例
+     └── logback-spring.xml           # 日志配置
 ```
 
 ---
@@ -112,12 +166,13 @@ skyroc-admin-api
 
 | 模块 | 功能说明 |
 |:---|:---|
-| 🔐 **认证授权** | 用户登录 / 登出、Token 刷新、获取用户信息及权限菜单 |
-| 👥 **用户管理** | 用户 CRUD、注册、状态管理 |
+| 🔐 **认证授权** | 用户登录 / 登出、Token 刷新、获取用户信息及权限菜单（双 Token 机制） |
+| 👥 **用户管理** | 用户 CRUD、注册、状态管理、角色绑定 |
 | 🎭 **角色管理** | 角色 CRUD、菜单权限分配、按钮权限分配 |
-| 📑 **菜单管理** | 菜单树形结构、路由菜单生成 |
+| 📑 **菜单管理** | 菜单树形结构、路由菜单生成（支持 Vue Router 格式） |
 | 🔘 **按钮权限** | 细粒度按钮权限控制、角色按钮关联 |
 | 📎 **文件管理** | 腾讯云 COS 上传、文件大小校验 |
+| 📝 **操作日志** | AOP 切面自动记录 API 操作日志 |
 
 ---
 
@@ -158,7 +213,24 @@ if (menuType === "1") {     // 目录类型
 
 ### 配置数据库
 
-创建数据库 `skyroc_admin_db`，修改 `application-dev.yml`：
+1. **创建数据库**
+
+```sql
+CREATE DATABASE skyroc_admin_db DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+2. **导入数据库脚本**
+
+执行 `db/` 目录下的 SQL 初始化脚本：
+
+| 脚本 | 说明 |
+|:---|:---|
+| `skyroc-admin-db.sql` | 数据库表结构 + 初始化数据（用户、角色、菜单等） |
+| `sys_menu.sql` | 系统菜单初始数据(仅参考使用) |
+
+3. **修改 `application-dev.yml` 配置**
+
+将 `application-dev-example.yml` 复制一份，重命名为 `application-dev.yml`，然后修改以下配置：
 
 ```yaml
 spring:
@@ -166,21 +238,10 @@ spring:
     url: jdbc:mysql://localhost:3306/skyroc_admin_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=UTC
     username: root
     password: your_password
-```
 
-### 配置 Redis
-
-```yaml
-spring:
   redis:
-    host: 127.0.0.1
-    port: 6379
     password: your_redis_password
-```
 
-### 配置腾讯云 COS
-
-```yaml
 tencent:
   cos:
     secretId: your_tencent_cos_secret_id
@@ -189,12 +250,7 @@ tencent:
     region: ap-chongqing
 ```
 
-| 参数 | 说明 |
-|:---:|:---|
-| secretId | 腾讯云访问密钥 ID |
-| secretKey | 腾讯云访问密钥 Key |
-| bucketName | COS 存储桶名称 |
-| region | 地域节点（如 ap-chongqing、ap-beijing 等） |
+> 注意：`application-dev-example.yml` 已包含完整配置项说明，可直接参考或复制使用。
 
 ### 启动项目
 
@@ -293,10 +349,12 @@ Authorization: Bearer <access_token>
 ## ⚙️ 配置文件
 
 ```
-application.yml         主配置（通用配置）
-application-dev.yml     开发环境配置
-application-prod.yml    生产环境配置
+application.yml               主配置（通用配置）
+application-dev-example.yml   开发环境配置示例（需复制为 application-dev.yml）
+application-prod-example.yml  生产环境配置示例（需复制为 application-prod.yml）
 ```
+
+> 注意：`-example` 配置文件包含敏感信息（如数据库密码、密钥等），请复制一份去掉 `-example` 后缀后填入自己的配置。
 
 **环境切换：**
 
@@ -320,7 +378,6 @@ java -jar app.jar --spring.profiles.active=prod  # 生产
 
 2. 在 dto/ 目录添加请求参数封装类
 3. 在 vo/ 目录添加响应数据封装类
-4. 配置路由和权限菜单
 ```
 
 ### 代码规范
