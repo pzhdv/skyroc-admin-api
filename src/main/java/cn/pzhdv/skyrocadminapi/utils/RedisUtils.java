@@ -3,6 +3,7 @@ package cn.pzhdv.skyrocadminapi.utils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ScanOptions;
@@ -32,12 +33,22 @@ public class RedisUtils {
     private RedisTemplate<String, Object> redisTemplate;
 
     /**
-     * 注入 Jackson 序列化工具，用于泛型反序列化
+     * 使用 Qualifier 确保注入的是 RedisConfig 中定义的那个专用的 ObjectMapper
      */
     @Resource
-    private ObjectMapper objectMapper;
+    @Qualifier("redisObjectMapper")
+    private ObjectMapper redisObjectMapper;
 
     // ==================== 公共通用方法 ====================
+
+
+    /**
+     * 统一的内部转换方法（解决所有 Long/Integer/LinkedHashMap 转换问题）
+     */
+    private <T> T convert(Object value, Class<T> clazz) {
+        if (value == null) return null;
+        return redisObjectMapper.convertValue(value, clazz);
+    }
 
     /**
      * 指定缓存的过期时间（秒）
@@ -152,12 +163,7 @@ public class RedisUtils {
                 return null;
             }
 
-            // 解决 Redis 自动把 Long 存成 Integer 导致的转型问题
-            if (clazz == Long.class && value instanceof Integer) {
-                return clazz.cast(((Integer) value).longValue());
-            }
-
-            return clazz.cast(value);
+            return convert(value, clazz);
         } catch (ClassCastException e) {
             log.error("Redis类型转换异常，key：{}", key, e);
             return null;
@@ -191,7 +197,7 @@ public class RedisUtils {
                 return null;
             }
             // Jackson 安全地将 LinkedHashMap 反序列化为指定泛型类型
-            return objectMapper.convertValue(obj, typeReference);
+            return redisObjectMapper.convertValue(obj, typeReference);
         } catch (Exception e) {
             log.error("Redis泛型反序列化异常，key：{}", key, e);
             return null;
@@ -267,13 +273,15 @@ public class RedisUtils {
 
     // ==================== Hash 操作 ====================
 
-    /**
-     * Hash 获取单个字段值
-     */
-    public Object hget(String key, String item) {
-        return redisTemplate.opsForHash().get(key, item);
-    }
 
+    /**
+     * Hash 获取单个字段值（带自动转换）
+     * 使用：User user = redisUtils.hget("user:map", "1", User.class);
+     */
+    public <T> T hget(String key, String item, Class<T> clazz) {
+        Object value = redisTemplate.opsForHash().get(key, item);
+        return convert(value, clazz);
+    }
     /**
      * Hash 获取所有键值对
      */
@@ -442,17 +450,22 @@ public class RedisUtils {
     // ==================== List 操作 ====================
 
     /**
-     * List 获取指定范围内容
-     *
-     * @param start 开始索引
-     * @param end   结束索引（-1 代表最后一个）
+     * List 获取范围（带自动转换）
+     * 使用：List<User> list = redisUtils.lGet("user:list", 0, -1, User.class);
      */
-    public List<Object> lGet(String key, long start, long end) {
+    public <T> List<T> lGet(String key, long start, long end, Class<T> clazz) {
         try {
-            return redisTemplate.opsForList().range(key, start, end);
+            List<Object> rawList = redisTemplate.opsForList().range(key, start, end);
+            if (rawList == null) return Collections.emptyList();
+
+            List<T> result = new ArrayList<>();
+            for (Object item : rawList) {
+                result.add(convert(item, clazz));
+            }
+            return result;
         } catch (Exception e) {
             log.error("Redis List获取异常，key：{}", key, e);
-            return null;
+            return Collections.emptyList();
         }
     }
 
