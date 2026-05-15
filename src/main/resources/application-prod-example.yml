@@ -56,7 +56,7 @@ spring:
 # ========================= 跨域配置（生产环境） =========================
 cors:
   # 生产环境：允许的前端来源（只保留真实前端端口）
-  allowed-origins: ${CORS_ALLOWED_ORIGINS:https://www.pzhdv.cn,https://admin.pzhdv.cn}
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:https://www.pzhdv.cn,https://pzhdv.cn}
   # 允许的请求头
   allowed-headers: Origin,Content-Type,Accept,Authorization,X-Requested-With,Token,Cookie,x-request-id
   # 允许的请求方法

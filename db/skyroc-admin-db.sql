@@ -1,17 +1,17 @@
 /*
  Navicat Premium Data Transfer
 
- Source Server         : 本机mysql
+ Source Server         : 京东mysql
  Source Server Type    : MySQL
- Source Server Version : 80200
- Source Host           : localhost:3306
+ Source Server Version : 80042
+ Source Host           : 117.72.63.33:3306
  Source Schema         : skyroc-admin-db
 
  Target Server Type    : MySQL
- Target Server Version : 80200
+ Target Server Version : 80042
  File Encoding         : 65001
 
- Date: 14/05/2026 16:24:30
+ Date: 15/05/2026 23:09:09
 */
 
 SET NAMES utf8mb4;
@@ -33,7 +33,7 @@ CREATE TABLE `sys_button`  (
                                UNIQUE INDEX `uk_button_code`(`button_code`) USING BTREE,
                                INDEX `idx_menu_id`(`menu_id`) USING BTREE,
                                INDEX `idx_status_deleted`(`status`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 29 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统菜单按钮权限表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 53 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统菜单按钮权限表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of sys_button
@@ -97,7 +97,7 @@ CREATE TABLE `sys_menu`  (
                              INDEX `idx_order_num_deleted`(`order`) USING BTREE,
                              INDEX `idx_status_deleted`(`status`) USING BTREE,
                              INDEX `idx_menu_type_deleted`(`menu_type`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 45 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统菜单表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 46 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统菜单表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of sys_menu
@@ -167,19 +167,14 @@ CREATE TABLE `sys_operation_log`  (
                                       PRIMARY KEY (`id`) USING BTREE,
                                       INDEX `idx_username`(`username`) USING BTREE,
                                       INDEX `idx_create_time`(`create_time`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统接口访问日志表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 81 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统接口访问日志表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of sys_operation_log
 -- ----------------------------
-INSERT INTO `sys_operation_log` VALUES (65, 'super', '/skyrocApi/auth/getSystemRoutes', 'GET', '{}', '{\"code\":200,\"message\":\"请求成功\",\"data\":{\"routes\":[{\"menuId\":30,\"menuType\":2,\"menuName\":\"个人中心\",\"routeName\":\"user-center\",\"routePath\":\"/user-center\",\"component\":\"page.(base)_user-center\",\"layout\":\"\",\"i18nK...[Truncated]', 19, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', '获取系统菜单路由信息', '2026-05-14 08:18:31');
-INSERT INTO `sys_operation_log` VALUES (66, 'super', '/skyrocApi/auth/getLoginUserInfo', 'GET', '{}', '{\"code\":200,\"message\":\"请求成功\",\"data\":{\"userId\":1,\"userNick\":\"超级管理员\",\"userName\":\"super\",\"avatar\":\"https://smallhui-1300189124.cos.ap-chongqing.myqcloud.com/uploads/00ef4e81-e338-4adf-8fb9-9b318064a052.j...[Truncated]', 26, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', '获取当前用户信息及权限', '2026-05-14 08:18:32');
-INSERT INTO `sys_operation_log` VALUES (67, 'super', '/skyrocApi/auth/getSystemRoutes', 'GET', '{}', '{\"code\":200,\"message\":\"请求成功\",\"data\":{\"routes\":[{\"menuId\":30,\"menuType\":2,\"menuName\":\"个人中心\",\"routeName\":\"user-center\",\"routePath\":\"/user-center\",\"component\":\"page.(base)_user-center\",\"layout\":\"\",\"i18nK...[Truncated]', 22, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', '获取系统菜单路由信息', '2026-05-14 08:19:04');
-INSERT INTO `sys_operation_log` VALUES (68, 'super', '/skyrocApi/auth/getLoginUserInfo', 'GET', '{}', '{\"code\":200,\"message\":\"请求成功\",\"data\":{\"userId\":1,\"userNick\":\"超级管理员\",\"userName\":\"super\",\"avatar\":\"https://smallhui-1300189124.cos.ap-chongqing.myqcloud.com/uploads/00ef4e81-e338-4adf-8fb9-9b318064a052.j...[Truncated]', 21, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', '获取当前用户信息及权限', '2026-05-14 08:19:05');
-INSERT INTO `sys_operation_log` VALUES (69, 'super', '/skyrocApi/systemManage/sysMenu/getMenuListTree', 'GET', '{\"current\":1,\"size\":10,\"parentId\":0}', '{\"code\":200,\"message\":\"请求成功\",\"data\":{\"records\":[{\"menuId\":30,\"menuType\":2,\"menuName\":\"个人中心\",\"routeName\":\"user-center\",\"routePath\":\"/user-center\",\"component\":\"page.(base)_user-center\",\"layout\":\"\",\"i18n...[Truncated]', 540, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', '分页查询菜单树结构列表', '2026-05-14 08:23:56');
-INSERT INTO `sys_operation_log` VALUES (70, 'super', '/skyrocApi/systemManage/sysMenu/getAllPages', 'GET', '{}', '{\"code\":200,\"message\":\"请求成功\",\"data\":[{\"menuId\":45,\"menuType\":2,\"menuName\":\"操作日志\",\"routeName\":\"manage_operation-log\",\"routePath\":\"/manage/operation-log\",\"component\":\"page.(base)_manage_operation-log\",\"...[Truncated]', 20, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', '获取所有页面菜单', '2026-05-14 08:23:57');
-INSERT INTO `sys_operation_log` VALUES (71, 'super', '/skyrocApi/systemManage/SysButton/getSysButtonListByConditionPage', 'GET', '{\"current\":1,\"size\":10}', '{\"code\":200,\"message\":\"请求成功\",\"data\":{\"records\":[{\"buttonId\":28,\"menuId\":45,\"buttonCode\":\"btn:sys:log:delete\",\"buttonName\":\"删除\",\"status\":1,\"createTime\":\"2026-05-14 14:22:30\",\"updateTime\":\"2026-05-14 14...[Truncated]', 34, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', '分页查询按钮权限列表', '2026-05-14 08:23:57');
-INSERT INTO `sys_operation_log` VALUES (72, 'super', '/skyrocApi/systemManage/role/getRoleList', 'GET', '{\"current\":1,\"size\":10}', '{\"code\":200,\"message\":\"请求成功\",\"data\":{\"records\":[{\"roleId\":1,\"roleCode\":\"R_SUPER_ADMIN\",\"roleName\":\"超级管理员\",\"roleDesc\":\"系统最高权限，拥有所有功能操作权限\",\"status\":1,\"defaultHomePageId\":1,\"createTime\":\"2026-05-07 00:54...[Truncated]', 18, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', '分页查询角色列表', '2026-05-14 08:23:58');
+INSERT INTO `sys_operation_log` VALUES (78, 'super', '/skyrocApi/systemManage/sysMenu/getMenuListTree', 'GET', '{\"current\":1,\"size\":10,\"parentId\":0}', '{\"code\":200,\"message\":\"请求成功\",\"data\":{\"records\":[{\"menuId\":30,\"menuType\":2,\"menuName\":\"个人中心\",\"routeName\":\"user-center\",\"routePath\":\"/user-center\",\"component\":\"page.(base)_user-center\",\"layout\":\"\",\"i18n...[Truncated]', 58, '221.221.148.38', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', '分页查询菜单树结构列表', '2026-05-15 15:08:11');
+INSERT INTO `sys_operation_log` VALUES (79, 'super', '/skyrocApi/systemManage/systemUser/getUserList', 'GET', '{\"current\":1,\"size\":10}', '{\"code\":200,\"message\":\"请求成功\",\"data\":{\"records\":[{\"userId\":1,\"userName\":\"super\",\"userNick\":\"超级管理员\",\"userPhone\":\"18785384970\",\"userEmail\":\"1939673715@qq.com\",\"userGender\":1,\"status\":1,\"avatar\":\"https://...[Truncated]', 103, '221.221.148.38', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', '分页查询用户列表', '2026-05-15 15:08:18');
+INSERT INTO `sys_operation_log` VALUES (80, 'super', '/skyrocApi/systemManage/role/getAllRoles', 'GET', '{}', '{\"code\":200,\"message\":\"请求成功\",\"data\":[{\"roleId\":1,\"roleCode\":\"R_SUPER_ADMIN\",\"roleName\":\"超级管理员\"},{\"roleId\":2,\"roleCode\":\"R_ADMIN\",\"roleName\":\"系统管理员\"}]}', 49, '221.221.148.38', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36', '查询所有角色', '2026-05-15 15:08:18');
 
 -- ----------------------------
 -- Table structure for sys_role
@@ -230,7 +225,7 @@ CREATE TABLE `sys_role_button`  (
                                     PRIMARY KEY (`id`) USING BTREE,
                                     INDEX `idx_role_id`(`role_id`) USING BTREE,
                                     INDEX `idx_button_id`(`button_id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 102 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '角色-按钮权限关联表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 125 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '角色-按钮权限关联表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of sys_role_button
